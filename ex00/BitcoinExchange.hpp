@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <map>
+#include <string>
+#include <regex.h>
 
 class BitcoinExchange {
 	private:
@@ -11,5 +13,9 @@ class BitcoinExchange {
 		BitcoinExchange();
 		BitcoinExchange(const BitcoinExchange &old);
 		BitcoinExchange& operator=(const BitcoinExchange &old);
-		~BitcoinExchange(;)
+		~BitcoinExchange();
+
+		void	loadDatabase(const std::string &filename);
+		void	checkInput(const std::string &filename);
+		double  getClosestPrice(void);
 };
