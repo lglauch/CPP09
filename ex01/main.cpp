@@ -4,13 +4,15 @@ int main(int argc, char **argv){
 	RPN rpn;
 	if (argc != 2){
 		std::cout << "Error: wrong input" << std::endl;
-		return -1;
+		return 1;
 	}
-	// try{
+	try{
 		double result = rpn.calculate(argv[1]);
 		std::cout << "Result: " << result << std::endl;
-	// }
-	// catch(){
-
-	// }
+	}
+	catch(std::invalid_argument &e){
+		std::cout << e.what() << std::endl;
+		return 1;
+	}
+	return 0;
 }

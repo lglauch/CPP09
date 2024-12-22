@@ -19,12 +19,35 @@ RPN::~RPN(void){
 }
 
 double RPN::calculate(const std::string &input){
-	double result = 1;
 	std::stack<double> container;
 	std::istringstream tokens(input);
 	std::string token;
-	while (tokens >> token)
-		std::cout << token << std::endl;
-
-	return result;
+	while (tokens >> token){
+		if ((std::isdigit(token[0]) && token.size() == 1) || (token[0] == '-' && isdigit(token[1]) && token.size() == 2))
+			container.push(std::stod(token));
+		else if (token == "+" || token == "-" || token == "/" || token == "*"){
+			if (container.size() < 2)
+				throw std::invalid_argument("Error: Invalid RPN expression");
+			double x = container.top();
+			container.pop();
+			double y = container.top();
+			container.pop();
+			double tmp;
+			if (token == "+")
+				tmp = y + x;
+			else if (token == "-")
+				tmp = y - x;
+			else if (token == "/")
+				tmp = y / x;
+			else if (token == "*")
+				tmp = y * x;
+			container.push(tmp);
+		}
+		else{
+			throw std::invalid_argument("Error: Invalid RPN expression or characters");
+		}
+	}
+	if (container.size() != 1)
+		throw std::invalid_argument("Error: Invalid result");
+	return container.top();
 }
