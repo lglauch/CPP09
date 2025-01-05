@@ -34,3 +34,9 @@ void	PmergeMe::printSequence(const std::string &prefix, const std::list<int> &ls
 	}
 	std::cout << std::endl;
 }
+
+long	PmergeMe::jacobsthal_number(long n){
+	if (n == 0) return 0;
+    if (n == 1) return 1;
+    return jacobsthal_number(n - 1) + 2 * jacobsthal_number(n - 2);
+}
