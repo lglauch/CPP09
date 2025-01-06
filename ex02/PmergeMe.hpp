@@ -22,7 +22,7 @@ public:
     long jacobsthal_number(long n);
 
     template <typename T>
-    bool comp(T lv, T rv) {
+    bool comp(const T& lv, const T& rv) {
         return *lv < *rv;
     }
 
@@ -46,19 +46,126 @@ public:
 private:
     template <typename T>
     void _merge_insertion_sort(T& container, int pair_level) {
+        typedef typename T::iterator Iterator;
+
         int pair_units_nbr = container.size() / pair_level;
         if (pair_units_nbr < 2)
             return;
+
         bool is_odd = pair_units_nbr % 2 == 1;
 
-        _sort_pairs(container, pair_level);
+        Iterator start = container.begin();
+        Iterator last = next(container.begin(), pair_level * (pair_units_nbr));
+        Iterator end = next(last, -(is_odd * pair_level));
+
+        int jump = 2 * pair_level;
+        for (Iterator it = start; it != end; std::advance(it, jump)) {
+            Iterator this_pair = next(it, pair_level - 1);
+            Iterator next_pair = next(it, pair_level * 2 - 1);
+            if (*this_pair > *next_pair) {
+                _swap_pair<T>(this_pair, pair_level);
+            }
+        }
         _merge_insertion_sort(container, pair_level * 2);
-        T main;
-        T pend;
-        _initialize_main_and_pend(container, pair_level, main, pend);
-        _insert_pend_into_main(main, pend);
-        _insert_remaining_elements(main, pend, is_odd, next(container.begin(), pair_level * pair_units_nbr), pair_level);
+
+        std::vector<Iterator> main;
+        std::vector<Iterator> pend;
+
+        main.push_back(next(container.begin(), pair_level - 1));
+        main.push_back(next(container.begin(), pair_level * 2 - 1));
+
+        for (int i = 4; i <= pair_units_nbr; i += 2) {
+            pend.push_back(next(container.begin(), pair_level * (i - 1) - 1));
+            main.push_back(next(container.begin(), pair_level * i - 1));
+        }
+
+        _merge_and_insert(container, main, pend, is_odd, end, pair_level);
+    }
+
+    template <typename T>
+    void _merge_and_insert(T& container, std::vector<typename T::iterator>& main, std::vector<typename T::iterator>& pend, bool is_odd, typename T::iterator end, int pair_level) {
+        _insert_pend_into_main(container, main, pend, pair_level);
+        _insert_remaining_elements(container, main, pend, is_odd, end, pair_level);
         _replace_container_values(container, main, pair_level);
+    }
+
+    template <typename T>
+    void _insert_pend_into_main(T& container, std::vector<typename T::iterator>& main, std::vector<typename T::iterator>& pend, int pair_level) {
+        typedef typename T::iterator Iterator;
+
+        (void)container;
+        (void)pair_level;
+        int prev_jacobsthal = jacobsthal_number(1);
+        int inserted_numbers = 0;
+        for (int k = 2;; k++) {
+            int curr_jacobsthal = jacobsthal_number(k);
+            int jacobsthal_diff = curr_jacobsthal - prev_jacobsthal;
+            int offset = 0;
+            if (jacobsthal_diff > static_cast<int>(pend.size()))
+                break;
+            int nbr_of_times = jacobsthal_diff;
+            typename std::vector<Iterator>::iterator pend_it = next(pend.begin(), jacobsthal_diff - 1);
+            typename std::vector<Iterator>::iterator bound_it =
+                next(main.begin(), curr_jacobsthal + inserted_numbers);
+            while (nbr_of_times) {
+                typename std::vector<Iterator>::iterator idx =
+                    std::upper_bound(main.begin(), bound_it, *pend_it, [this](const Iterator& lv, const Iterator& rv) { return comp(lv, rv); });
+                typename std::vector<Iterator>::iterator inserted = main.insert(idx, *pend_it);
+                nbr_of_times--;
+                pend_it = pend.erase(pend_it);
+                std::advance(pend_it, -1);
+                offset += (inserted - main.begin()) == curr_jacobsthal + inserted_numbers;
+                bound_it = next(main.begin(), curr_jacobsthal + inserted_numbers - offset);
+            }
+            prev_jacobsthal = curr_jacobsthal;
+            inserted_numbers += jacobsthal_diff;
+            offset = 0;
+        }
+    }
+
+    template <typename T>
+    void _insert_remaining_elements(T& container, std::vector<typename T::iterator>& main, std::vector<typename T::iterator>& pend, bool is_odd, typename T::iterator end, int pair_level) {
+        typedef typename T::iterator Iterator;
+
+        (void)container;
+        for (size_t i = 0; i < pend.size(); i++) {
+            typename std::vector<Iterator>::iterator curr_pend = next(pend.begin(), i);
+            typename std::vector<Iterator>::iterator curr_bound =
+                next(main.begin(), main.size() - pend.size() + i);
+            typename std::vector<Iterator>::iterator idx =
+                std::upper_bound(main.begin(), curr_bound, *curr_pend, [this](const Iterator& lv, const Iterator& rv) { return comp(lv, rv); });
+            main.insert(idx, *curr_pend);
+        }
+
+        if (is_odd) {
+            typename T::iterator odd_pair = next(end, pair_level - 1);
+            typename std::vector<Iterator>::iterator idx =
+                std::upper_bound(main.begin(), main.end(), odd_pair, [this](const Iterator& lv, const Iterator& rv) { return comp(lv, rv); });
+            main.insert(idx, odd_pair);
+        }
+    }
+
+    template <typename T>
+    void _replace_container_values(T& container, std::vector<typename T::iterator>& main, int pair_level) {
+        typedef typename T::iterator Iterator;
+
+        std::vector<int> copy;
+        copy.reserve(container.size());
+        for (typename std::vector<Iterator>::iterator it = main.begin(); it != main.end(); it++) {
+            for (int i = 0; i < pair_level; i++) {
+                Iterator pair_start = *it;
+                std::advance(pair_start, -pair_level + i + 1);
+                copy.push_back(*pair_start);
+            }
+        }
+
+        Iterator container_it = container.begin();
+        typename std::vector<int>::iterator copy_it = copy.begin();
+        while (copy_it != copy.end()) {
+            *container_it = *copy_it;
+            container_it++;
+            copy_it++;
+        }
     }
 
     template <typename T>
@@ -69,125 +176,5 @@ private:
             std::iter_swap(start, next(start, pair_level));
             ++start;
         }
-    }
-
-    template <typename T>
-    void _sort_pairs(T &container, int pair_level) {
-        typedef typename T::iterator Iterator;
-
-        int pair_units_nbr = container.size() / pair_level;
-        bool is_odd = pair_units_nbr % 2 == 1;
-
-        Iterator start = container.begin();
-        Iterator last = next(container.begin(), pair_level * pair_units_nbr);
-        Iterator end = next(last, -(is_odd * pair_level));
-
-        int jump = 2 * pair_level;
-        for (Iterator it = start; it != end; std::advance(it, jump)) {
-            Iterator this_pair = next(it, pair_level - 1);
-            Iterator next_pair = next(it, pair_level * 2 - 1);
-            if (*this_pair > *next_pair)
-                _swap_pair<T>(this_pair, pair_level);
-        }
-        std::cout << "After sorting pairs: ";
-        for (const auto &elem : container) {
-            std::cout << elem << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    template <typename T>
-    void _initialize_main_and_pend(T &container, int pair_level, T &main, T &pend) {
-        int pair_units_nbr = container.size() / pair_level;
-
-        main.push_back(*next(container.begin(), pair_level - 1));
-        main.push_back(*next(container.begin(), pair_level * 2 - 1));
-
-        for (int i = 4; i <= pair_units_nbr; i += 2) {
-            pend.push_back(*next(container.begin(), pair_level * (i - 1) - 1));
-            main.push_back(*next(container.begin(), pair_level * i - 1));
-        }
-        std::cout << "After initializing main and pend:\nMain: ";
-        for (const auto &elem : main) {
-            std::cout << elem << " ";
-        }
-        std::cout << "\nPend: ";
-        for (const auto &elem : pend) {
-            std::cout << elem << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    template <typename T>
-    void _insert_pend_into_main(T &main, T &pend) {
-        int prev_jacobsthal = jacobsthal_number(1);
-
-        for (int k = 2;; ++k) {
-            int curr_jacobsthal = jacobsthal_number(k);
-            int jacobsthal_diff = curr_jacobsthal - prev_jacobsthal;
-
-            if (jacobsthal_diff > static_cast<int>(pend.size())) {
-                break;
-            }
-
-            auto pend_it = pend.begin();
-            for (int i = 0; i < jacobsthal_diff && pend_it != pend.end(); ++i) {
-                auto insert_it = std::upper_bound(main.begin(), main.end(), *pend_it);
-                main.insert(insert_it, *pend_it);
-                pend_it = pend.erase(pend_it);
-            }
-
-            prev_jacobsthal = curr_jacobsthal;
-        }
-        std::cout << "After inserting pend into main:\nMain: ";
-        for (const auto &elem : main) {
-            std::cout << elem << " ";
-        }
-        std::cout << "\nPend: ";
-        for (const auto &elem : pend) {
-            std::cout << elem << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    template <typename T>
-    void _insert_remaining_elements(T &main, T &pend, bool is_odd, typename T::iterator end, int pair_level) {
-        for (const auto &elem : pend) {
-            auto insert_it = std::upper_bound(main.begin(), main.end(), elem);
-            main.insert(insert_it, elem);
-        }
-
-        if (is_odd) {
-            auto odd_pair = next(end, pair_level - 1);
-            auto insert_it = std::upper_bound(main.begin(), main.end(), *odd_pair);
-            main.insert(insert_it, *odd_pair);
-        }
-        std::cout << "After inserting remaining elements:\nMain: ";
-        for (const auto &elem : main) {
-            std::cout << elem << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    template <typename T>
-    void _replace_container_values(T &container, T &main, int pair_level) {
-        T copy;
-        (void)pair_level;
-        for (auto it = main.begin(); it != main.end(); ++it) {
-            copy.push_back(*it);
-        }
-
-        std::cout << "Copy after replacing container values: ";
-        for (const auto &elem : copy) {
-            std::cout << elem << " ";
-        }
-        std::cout << std::endl;
-
-        std::copy(copy.begin(), copy.end(), container.begin());
-        std::cout << "After replacing container values: ";
-        for (const auto &elem : container) {
-            std::cout << elem << " ";
-        }
-        std::cout << std::endl;
     }
 };

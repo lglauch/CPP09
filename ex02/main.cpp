@@ -32,12 +32,10 @@ int main(int argc, char **argv){
 	std::cout << std::endl;
 	sorter.printSequence("Before(lst): ", lst);
 	std::cout << std::endl;
+	std::cout << std::endl;
 
-	std::cout << "Test1" << std::endl;
 	double vecTime = sorter.measureSortTime(vec);
-	std::cout << "Test2" << std::endl;
 	double lstTime = sorter.measureSortTime(lst);
-	std::cout << "Test3" << std::endl;
 
 	sorter.printSequence("After(vec): ", vec);
 	std::cout << std::endl;
