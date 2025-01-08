@@ -105,8 +105,7 @@ private:
                 break;
             int nbr_of_times = jacobsthal_diff;
             typename std::vector<Iterator>::iterator pend_it = next(pend.begin(), jacobsthal_diff - 1);
-            typename std::vector<Iterator>::iterator bound_it =
-                next(main.begin(), curr_jacobsthal + inserted_numbers);
+            typename std::vector<Iterator>::iterator bound_it = next(main.begin(), curr_jacobsthal + inserted_numbers);
             while (nbr_of_times) {
                 typename std::vector<Iterator>::iterator idx =
                     std::upper_bound(main.begin(), bound_it, *pend_it, [this](const Iterator& lv, const Iterator& rv) { return comp(lv, rv); });
@@ -130,10 +129,8 @@ private:
         (void)container;
         for (size_t i = 0; i < pend.size(); i++) {
             typename std::vector<Iterator>::iterator curr_pend = next(pend.begin(), i);
-            typename std::vector<Iterator>::iterator curr_bound =
-                next(main.begin(), main.size() - pend.size() + i);
-            typename std::vector<Iterator>::iterator idx =
-                std::upper_bound(main.begin(), curr_bound, *curr_pend, [this](const Iterator& lv, const Iterator& rv) { return comp(lv, rv); });
+            typename std::vector<Iterator>::iterator curr_bound = next(main.begin(), main.size() - pend.size() + i);
+            typename std::vector<Iterator>::iterator idx = std::upper_bound(main.begin(), curr_bound, *curr_pend, [this](const Iterator& lv, const Iterator& rv) { return comp(lv, rv); });
             main.insert(idx, *curr_pend);
         }
 

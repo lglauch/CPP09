@@ -37,15 +37,15 @@ int main(int argc, char **argv){
 	double vecTime = sorter.measureSortTime(vec);
 	double lstTime = sorter.measureSortTime(lst);
 
-	sorter.printSequence("After(vec): ", vec);
+	sorter.printSequence("Ordered (vec): ", vec);
 	std::cout << std::endl;
 	std::cout << std::endl;
-	sorter.printSequence("After(lst): ", lst);
+	sorter.printSequence("Ordered (lst): ", lst);
 	std::cout << std::endl;
 	std::cout << std::endl;
 
-	std::cout << "Time to process a range of " << vec.size() << " elements with std::vector: " << vecTime << std::endl;
-	std::cout << "Time to process a range of " << lst.size() << " elements with std::lst: " << lstTime << std::endl;
+	std::cout << "Time to process a range of " << vec.size() << " elements with std::vector: " << vecTime << "µs" << std::endl;
+	std::cout << "Time to process a range of " << lst.size() << " elements with std::lst: " << lstTime << "µs" << std::endl;
 
 	return 0;
 }
